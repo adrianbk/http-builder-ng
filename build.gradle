@@ -15,7 +15,7 @@ plugins {
 apply plugin: 'org.asciidoctor.convert'
 
 group = 'io.github.http-builder-ng'
-version = '0.13.0'
+version = '0.13.1'
 
 repositories {
     jcenter()
@@ -110,11 +110,18 @@ subprojects {
                 artifact sourcesJar
                 groupId project.group
                 version project.version
-            }
-        }
 
-        configurations.runtime.allDependencies.each {
-            println(it);
+                pom.withXml {
+                    // workaround for maven-publish issue
+                    asNode().dependencies.'*'.findAll() {
+                        it.scope.text() == 'runtime' && project.configurations.compile.allDependencies.find { dep ->
+                            dep.name == it.artifactId.text()
+                        }
+                    }.each() {
+                        it.scope*.value = 'compile'
+                    }
+                }
+            }
         }
     }
 
